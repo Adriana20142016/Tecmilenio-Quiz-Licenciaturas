@@ -472,10 +472,6 @@
                         La información proporcionada será utilizada únicamente para fines educativos y de asesoría académica.
                     </div>
 
-                    <div class="loading" id="loading-message">
-                        ⏳ Guardando información en Drive...
-                    </div>
-
                     <button type="submit" class="btn" id="submit-btn">Iniciar Test Vocacional</button>
                 </form>
             </div>
@@ -523,7 +519,7 @@
 
     <script>
         // Configuración de Google Sheets
-        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycby_dNsK1Uci6sPwgZHIsBuDrsMj_kgFHrNhmfchE-64-0vbfV1YxgG7cUl1KVtGDm5aEw/exec';
+        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwBvte2mxvbUk3xZtwytGzDnUKwOqANpujwjtWYbf9Xg821ySR5ptnx88mgpUEwOOfgVQ/exec';
 
         // Datos del usuario
         let userData = {};
@@ -739,16 +735,12 @@
             }
         }
 
-        // Manejo del formulario inicial
+        // Manejo del formulario inicial - SIN ENVÍO A GOOGLE SHEETS
         document.getElementById('user-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             if (validateForm()) {
-                // Mostrar loading
-                document.getElementById('loading-message').style.display = 'block';
-                document.getElementById('submit-btn').disabled = true;
-                
-                // Guardar datos del usuario
+                // Guardar datos del usuario SOLO EN MEMORIA
                 userData = {
                     nombre: document.getElementById('nombre').value,
                     telefono: document.getElementById('telefono').value,
@@ -761,41 +753,15 @@
                     hora: new Date().toLocaleTimeString('es-MX')
                 };
                 
-                // Enviar a Google Sheets
-                const dataToSend = {
-                    timestamp: new Date().toLocaleString('es-MX'),
-                    promotora: promotoras[promotora].nombre,
-                    ref: promotora,
-                    nombre: userData.nombre,
-                    telefono: userData.telefono,
-                    email: userData.email,
-                    promedio: userData.promedio,
-                    empresa: userData.empresa,
-                    inversion: userData.inversion,
-                    resultado: 'Pendiente',
-                    tipo: 'Quiz Carreras',
-                    respuestas: 'Iniciando quiz...'
-                };
-                const success = await sendToGoogleSheets(dataToSend);
+                console.log('✅ Datos guardados en memoria:', userData);
                 
-                // Ocultar loading
-                document.getElementById('loading-message').style.display = 'none';
+                // Ocultar formulario y mostrar quiz (SIN ENVIAR NADA)
+                document.getElementById('form-section').classList.add('hidden');
+                document.getElementById('quiz-section').classList.remove('hidden');
+                document.getElementById('quiz-section').classList.add('fade-in');
                 
-                if (success) {
-                    // Ocultar formulario y mostrar quiz
-                    document.getElementById('form-section').classList.add('hidden');
-                    document.getElementById('quiz-section').classList.remove('hidden');
-                    document.getElementById('quiz-section').classList.add('fade-in');
-                    
-                    // Mostrar primera pregunta
-                    showQuestion();
-                } else {
-                    // Continuar aunque falle Google Sheets (no bloquear el quiz)
-                    document.getElementById('form-section').classList.add('hidden');
-                    document.getElementById('quiz-section').classList.remove('hidden');
-                    document.getElementById('quiz-section').classList.add('fade-in');
-                    showQuestion();
-                }
+                // Mostrar primera pregunta
+                showQuestion();
             }
         });
 
@@ -826,14 +792,14 @@
                 isValid = false;
             }
             
-            // Validar promedio (más flexible)
+            // Validar promedio
             const promedio = document.getElementById('promedio').value.trim();
             if (!promedio) {
                 document.getElementById('promedio-error').textContent = 'Ingresa tu promedio académico';
                 isValid = false;
             }
             
-            // Validar empresa (ahora obligatoria)
+            // Validar empresa
             const empresa = document.getElementById('empresa').value.trim();
             if (!empresa) {
                 document.getElementById('empresa-error').textContent = 'El nombre de la empresa es obligatorio';
@@ -937,28 +903,16 @@
             let showSecondCareer = false;
             let secondCareerName = '';
             
-            console.log('🔍 Verificando segunda carrera:');
-            console.log('- Primera carrera:', winningCareer, 'con', maxScore, 'puntos');
-            console.log('- Segunda carrera:', secondCareer ? secondCareer.name : 'No hay', 'con', secondCareer ? secondCareer.score : 0, 'puntos');
-            
             if (secondCareer && secondCareer.score > 0) {
                 const difference = maxScore - secondCareer.score;
-                console.log('- Diferencia:', difference, 'puntos');
-                console.log('- ¿Diferencia <= 6?:', difference <= 6);
-                
                 if (difference <= 6) {
                     showSecondCareer = true;
                     secondCareerName = secondCareer.name;
-                    console.log('✅ SE MUESTRA segunda carrera:', secondCareerName);
-                } else {
-                    console.log('❌ NO se muestra segunda carrera (diferencia muy grande)');
                 }
-            } else {
-                console.log('❌ NO hay segunda carrera válida');
             }
             
-            // Enviar resultados COMPLETOS a Google Sheets (UNA SOLA VEZ)
-            const resultData = {
+            // ✅ ENVÍO ÚNICO AL FINAL - CON TODOS LOS DATOS COMPLETOS
+            const finalData = {
                 timestamp: new Date().toLocaleString('es-MX'),
                 promotora: promotoras[promotora].nombre,
                 ref: promotora,
@@ -967,7 +921,7 @@
                 email: userData.email,
                 promedio: userData.promedio,
                 empresa: userData.empresa,
-                inversion: userData.inversion,
+                inversion: userData.inversion,  // ✅ CAMPO INVERSIÓN CORRECTO
                 resultado: showSecondCareer ? 
                     `Principal: ${careers[winningCareer].name} | Secundaria: ${careers[secondCareerName].name}` : 
                     careers[winningCareer].name,
@@ -975,7 +929,8 @@
                 respuestas: `Principal: ${careers[winningCareer].name} (${maxScore} pts)${showSecondCareer ? ` | Secundaria: ${careers[secondCareerName].name} (${secondCareer.score} pts)` : ''} | Puntajes: ${JSON.stringify(scores)}`
             };
             
-            await sendToGoogleSheets(resultData);
+            console.log('📤 Enviando datos finales:', finalData);
+            await sendToGoogleSheets(finalData);
             
             // Información de la carrera principal
             const career = careers[winningCareer];
@@ -989,7 +944,6 @@
             
             // Si hay segunda carrera, agregar mensaje
             if (showSecondCareer) {
-                console.log('🎨 Agregando HTML de segunda carrera...');
                 resultHTML += `
                     <div style="background: linear-gradient(135deg, #fff3e0 0%, #f0f7f0 100%); padding: 20px; border-radius: 15px; margin: 20px 0; border: 2px solid #a8d46f;">
                         <h4 style="color: #2E7D7B; margin-bottom: 10px; font-size: 1.1rem;">🎓 También podrías considerar:</h4>
@@ -1002,8 +956,6 @@
                         <p style="color: #666; font-style: italic; margin-top: 10px; font-size: 0.9rem;">Ambas carreras coinciden con tu perfil y preferencias</p>
                     </div>
                 `;
-            } else {
-                console.log('❌ NO se agrega HTML de segunda carrera');
             }
             
             resultHTML += `
@@ -1079,9 +1031,6 @@
             
             if (showSecondCareer) {
                 mensaje += `, pero también me interesa *${secondCareerInfo.name}*`;
-                console.log('📱 WhatsApp con dos carreras:', mensaje);
-            } else {
-                console.log('📱 WhatsApp con una carrera:', mensaje);
             }
             
             mensaje += `. ¿Podrías darme información sobre el descuento y el proceso de admisión?`;
