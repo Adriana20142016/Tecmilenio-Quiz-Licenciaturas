@@ -234,6 +234,17 @@
             box-shadow: none;
         }
 
+        .btn.processing {
+            background: #7CB342;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
         .progress-bar {
             width: 100%;
             height: 8px;
@@ -520,6 +531,10 @@
     <script>
         // Configuración de Google Sheets
         const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwBvte2mxvbUk3xZtwytGzDnUKwOqANpujwjtWYbf9Xg821ySR5ptnx88mgpUEwOOfgVQ/exec';
+
+        // Variables de control para evitar doble envío
+        let isProcessing = false;
+        let resultsSent = false;
 
         // Datos del usuario
         let userData = {};
@@ -857,6 +872,21 @@
         }
 
         function nextQuestion() {
+            // ✅ PROTECCIÓN CONTRA DOBLE CLIC
+            if (isProcessing) {
+                console.log('⚠️ Procesamiento en curso, ignorando clic adicional');
+                return;
+            }
+
+            // Si es la última pregunta, activar protección
+            if (currentQuestion === questions.length - 1) {
+                isProcessing = true;
+                const nextBtn = document.getElementById('next-btn');
+                nextBtn.disabled = true;
+                nextBtn.textContent = 'Procesando resultados...';
+                nextBtn.classList.add('processing');
+            }
+
             // Procesar respuesta
             if (window.selectedOption !== undefined) {
                 const question = questions[currentQuestion];
@@ -874,7 +904,10 @@
             if (currentQuestion < questions.length) {
                 showQuestion();
             } else {
-                showResults();
+                // Pequeño delay para mejorar UX
+                setTimeout(() => {
+                    showResults();
+                }, 500);
             }
             
             // Resetear selección
@@ -882,6 +915,13 @@
         }
 
         async function showResults() {
+            // ✅ DOBLE PROTECCIÓN - Verificar si ya se enviaron resultados
+            if (resultsSent) {
+                console.log('⚠️ Resultados ya enviados, ignorando llamada adicional');
+                return;
+            }
+            resultsSent = true;
+
             // Mostrar todos los puntajes para debug
             console.log('🔍 DEBUG - Puntajes detallados:');
             for (const career in scores) {
@@ -992,7 +1032,7 @@
                             </div>
                             <div style="background: #f0f7f0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #7CB342;">
                                 <div style="font-size: 1.3rem; font-weight: 700; color: #2E7D7B;">7</div>
-                                <div style="font-size: 0.9rem; color: #555;">Lengua extranjera</div>
+                                <div style="font-size: 0.9rem; color: #555;">Lengua extranjera (incluidos en los 28)</div>
                             </div>
                             <div style="background: #f0f7f0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #7CB342;">
                                 <div style="font-size: 1.3rem; font-weight: 700; color: #2E7D7B;">✓</div>
