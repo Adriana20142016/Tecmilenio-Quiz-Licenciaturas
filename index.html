@@ -1,391 +1,687 @@
-description: "Gestiona el capital humano, diseña estrategias de capacitación y crea ambientes laborales positivos alineando equipos con objetivos organizacionales.",
-               employability: "93%",
-               duration: "3 años",
-               companies: "90% de empresas se preocupan por retención de personal",
-               areas: "Recursos Humanos, Capacitación, Desarrollo Organizacional",
-               jobs: ["Técnico de reclutamiento", "Especialista de nóminas", "Administrador de recursos humanos", "Analista de capital humano", "Gerente de recursos humanos"],
-               routes: ["Desarrollo Humano y Bienestar Organizacional", "Gestión Estratégica del Talento Humano"]
-           },
-           tecnologia: {
-               name: "Ingeniería en Tecnología y Transformación Digital",
-               description: "Lidera proyectos de innovación tecnológica, optimizando procesos mediante soluciones avanzadas como computación en la nube y ciencia de datos.",
-               employability: "95%",
-               duration: "3 años",
-               companies: "149 millones de nuevos puestos digitales previstos para 2025",
-               areas: "Transformación Digital, Cloud Computing, Ciberseguridad, Ciencia de Datos",
-               jobs: ["Consultor en Transformación Digital", "Gestor de Proyectos de TI", "Arquitecto de soluciones cloud", "Ingeniero en Seguridad Informática"],
-               routes: ["Transformación digital", "Computación en la nube", "Ciencia de datos", "Seguridad Informática", "Sistemas Informáticos de Gestión"]
-           }
-       };
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Carreras - Universidad Tecmilenio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-       // Variables del quiz
-       let currentQuestion = 0;
-       let scores = {
-           administracion: 0,
-           mercadotecnia: 0,
-           derecho: 0,
-           educacion: 0,
-           industrial: 0,
-           software: 0,
-           comercio: 0,
-           talento: 0,
-           tecnologia: 0
-       };
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #f8fbf8 100%);
+            color: #333;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
 
-       // Función para enviar datos a Google Sheets
-       async function sendToGoogleSheets(data) {
-           try {
-               const response = await fetch(GOOGLE_SHEETS_URL, {
-                   method: 'POST',
-                   mode: 'no-cors',
-                   headers: {
-                       'Content-Type': 'application/json',
-                   },
-                   body: JSON.stringify(data)
-               });
-               
-               console.log('✅ Datos enviados a Google Sheets');
-               return true;
-           } catch (error) {
-               console.error('❌ Error enviando a Google Sheets:', error);
-               return false;
-           }
-       }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-       // Manejo del formulario inicial
-       document.getElementById('user-form').addEventListener('submit', async function(e) {
-           e.preventDefault();
-           
-           if (validateForm()) {
-               // Guardar datos del usuario (NO enviar aún a Google Sheets)
-               userData = {
-                   nombre: document.getElementById('nombre').value,
-                   telefono: document.getElementById('telefono').value,
-                   email: document.getElementById('email').value,
-                   promedio: document.getElementById('promedio').value,
-                   empresa: document.getElementById('empresa').value,
-                   inversion: document.getElementById('inversion').value,
-                   promotora: promotora,
-                   fecha: new Date().toLocaleDateString('es-MX'),
-                   hora: new Date().toLocaleTimeString('es-MX')
-               };
-               
-               // Mostrar loading (simulado)
-               document.getElementById('loading-message').style.display = 'block';
-               setTimeout(() => {
-                   document.getElementById('loading-message').style.display = 'none';
-                   
-                   // Ocultar formulario y mostrar quiz
-                   document.getElementById('form-section').classList.add('hidden');
-                   document.getElementById('quiz-section').classList.remove('hidden');
-                   document.getElementById('quiz-section').classList.add('fade-in');
-                   
-                   // Mostrar primera pregunta
-                   showQuestion();
-               }, 1000);
-           }
-       });
+        .quiz-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(124, 179, 66, 0.15);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+            border-top: 8px solid #7CB342;
+        }
 
-       function validateForm() {
-           let isValid = true;
-           
-           // Limpiar errores previos
-           document.querySelectorAll('.error-message').forEach(error => error.textContent = '');
-           
-           // Validar nombre
-           const nombre = document.getElementById('nombre').value.trim();
-           if (!nombre) {
-               document.getElementById('nombre-error').textContent = 'El nombre es obligatorio';
-               isValid = false;
-           }
-           
-           // Validar teléfono
-           const telefono = document.getElementById('telefono').value.trim();
-           if (!telefono || !/^[0-9]{10}$/.test(telefono)) {
-               document.getElementById('telefono-error').textContent = 'Ingresa un teléfono válido de 10 dígitos';
-               isValid = false;
-           }
-           
-           // Validar email
-           const email = document.getElementById('email').value.trim();
-           if (!email || !email.includes('@')) {
-               document.getElementById('email-error').textContent = 'Ingresa un correo válido con @';
-               isValid = false;
-           }
-           
-           // Validar promedio (más flexible)
-           const promedio = document.getElementById('promedio').value.trim();
-           if (!promedio) {
-               document.getElementById('promedio-error').textContent = 'Ingresa tu promedio académico';
-               isValid = false;
-           }
-           
-           // Validar empresa (ahora obligatoria)
-           const empresa = document.getElementById('empresa').value.trim();
-           if (!empresa) {
-               document.getElementById('empresa-error').textContent = 'El nombre de la empresa es obligatorio';
-               isValid = false;
-           }
-           
-           // Validar inversión
-           if (!document.getElementById('inversion').value) {
-               document.getElementById('inversion-error').textContent = 'Selecciona tu rango de inversión';
-               isValid = false;
-           }
-           
-           return isValid;
-       }
+        .quiz-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, #7CB342 0%, #a8d46f 50%, #7CB342 100%);
+        }
 
-       function showQuestion() {
-           const question = questions[currentQuestion];
-           
-           // Actualizar número de pregunta y texto
-           document.getElementById('question-number').textContent = currentQuestion + 1;
-           document.getElementById('question-text').textContent = question.text;
-           
-           // Actualizar barra de progreso
-           const progress = ((currentQuestion + 1) / questions.length) * 100;
-           document.getElementById('progress-fill').style.width = progress + '%';
-           
-           // Generar opciones
-           const optionsContainer = document.getElementById('options-container');
-           optionsContainer.innerHTML = '';
-           
-           question.options.forEach((option, index) => {
-               const optionElement = document.createElement('div');
-               optionElement.className = 'option';
-               optionElement.textContent = option.text;
-               optionElement.addEventListener('click', () => selectOption(index));
-               optionsContainer.appendChild(optionElement);
-           });
-           
-           // Deshabilitar botón siguiente
-           document.getElementById('next-btn').disabled = true;
-       }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-       function selectOption(optionIndex) {
-           // Remover selección previa
-           document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
-           
-           // Seleccionar nueva opción
-           document.querySelectorAll('.option')[optionIndex].classList.add('selected');
-           
-           // Guardar selección
-           window.selectedOption = optionIndex;
-           
-           // Habilitar botón siguiente
-           document.getElementById('next-btn').disabled = false;
-       }
+        .university-name {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2E7D7B;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
 
-       function nextQuestion() {
-           // Procesar respuesta
-           if (window.selectedOption !== undefined) {
-               const question = questions[currentQuestion];
-               const selectedAnswer = question.options[window.selectedOption];
-               
-               // Sumar puntos
-               for (const career in selectedAnswer.scores) {
-                   scores[career] += selectedAnswer.scores[career];
-               }
-           }
-           
-           // Siguiente pregunta o mostrar resultados
-           currentQuestion++;
-           
-           if (currentQuestion < questions.length) {
-               showQuestion();
-           } else {
-               showResults();
-           }
-           
-           // Resetear selección
-           window.selectedOption = undefined;
-       }
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            font-weight: 500;
+        }
 
-       async function showResults() {
-           // Mostrar todos los puntajes para debug
-           console.log('🔍 DEBUG - Puntajes detallados:');
-           for (const career in scores) {
-               console.log(`${career}: ${scores[career]} puntos`);
-           }
-           
-           // Ordenar carreras por puntuación (de mayor a menor)
-           const sortedCareers = Object.keys(scores)
-               .map(career => ({ name: career, score: scores[career] }))
-               .sort((a, b) => b.score - a.score);
-           
-           const winningCareer = sortedCareers[0].name;
-           const maxScore = sortedCareers[0].score;
-           const secondCareer = sortedCareers[1];
-           
-           console.log('📊 Ranking completo de carreras:', sortedCareers);
-           
-           // Determinar si hay una segunda carrera cercana (diferencia máxima de 6 puntos)
-           let showSecondCareer = false;
-           let secondCareerName = '';
-           
-           console.log('🔍 Verificando segunda carrera:');
-           console.log('- Primera carrera:', winningCareer, 'con', maxScore, 'puntos');
-           console.log('- Segunda carrera:', secondCareer ? secondCareer.name : 'No hay', 'con', secondCareer ? secondCareer.score : 0, 'puntos');
-           
-           if (secondCareer && secondCareer.score > 0) {
-               const difference = maxScore - secondCareer.score;
-               console.log('- Diferencia:', difference, 'puntos');
-               console.log('- ¿Diferencia <= 6?:', difference <= 6);
-               
-               if (difference <= 6) {
-                   showSecondCareer = true;
-                   secondCareerName = secondCareer.name;
-                   console.log('✅ SE MUESTRA segunda carrera:', secondCareerName);
-               } else {
-                   console.log('❌ NO se muestra segunda carrera (diferencia muy grande)');
-               }
-           } else {
-               console.log('❌ NO hay segunda carrera válida');
-           }
-           
-           // Enviar resultados COMPLETOS a Google Sheets (UNA SOLA VEZ)
-           const resultData = {
-               timestamp: new Date().toLocaleString('es-MX'),
-               promotora: promotoras[promotora].nombre,
-               ref: promotora,
-               nombre: userData.nombre,
-               telefono: userData.telefono,
-               email: userData.email,
-               promedio: userData.promedio,
-               empresa: userData.empresa,
-               inversion: userData.inversion, // ✅ PRESUPUESTO AGREGADO
-               resultado: showSecondCareer ? 
-                   `Principal: ${careers[winningCareer].name} | Secundaria: ${careers[secondCareerName].name}` : 
-                   careers[winningCareer].name,
-               tipo: 'Quiz Carreras - Completado',
-               respuestas: `Principal: ${careers[winningCareer].name} (${maxScore} pts)${showSecondCareer ? ` | Secundaria: ${careers[secondCareerName].name} (${secondCareer.score} pts)` : ''} | Puntajes: ${JSON.stringify(scores)}`
-           };
-           
-           await sendToGoogleSheets(resultData);
-           
-           // Información de la carrera principal
-           const career = careers[winningCareer];
-           const secondCareerInfo = showSecondCareer ? careers[secondCareerName] : null;
-           
-           let resultHTML = `
-               <div class="career-result">
-                   <h3 class="career-title">${career.name}</h3>
-                   <p class="career-description">${career.description}</p>
-           `;
-           
-           // Si hay segunda carrera, agregar mensaje
-           if (showSecondCareer) {
-               console.log('🎨 Agregando HTML de segunda carrera...');
-               resultHTML += `
-                   <div style="background: linear-gradient(135deg, #fff3e0 0%, #f0f7f0 100%); padding: 20px; border-radius: 15px; margin: 20px 0; border: 2px solid #a8d46f;">
-                       <h4 style="color: #2E7D7B; margin-bottom: 10px; font-size: 1.1rem;">🎓 También podrías considerar:</h4>
-                       <h5 style="color: #2E7D7B; font-size: 1.2rem; font-weight: 600; margin-bottom: 10px;">${secondCareerInfo.name}</h5>
-                       <p style="color: #555; line-height: 1.5; margin-bottom: 10px;">${secondCareerInfo.description}</p>
-                       <div style="display: flex; gap: 20px; font-size: 0.9rem;">
-                           <span style="color: #2E7D7B;"><strong>Empleabilidad:</strong> ${secondCareerInfo.employability}</span>
-                           <span style="color: #2E7D7B;"><strong>Duración:</strong> ${secondCareerInfo.duration}</span>
-                       </div>
-                       <p style="color: #666; font-style: italic; margin-top: 10px; font-size: 0.9rem;">Ambas carreras coinciden con tu perfil y preferencias</p>
-                   </div>
-               `;
-           } else {
-               console.log('❌ NO se agrega HTML de segunda carrera');
-           }
-           
-           resultHTML += `
-                   <div class="career-stats">
-                       <div class="stat-item">
-                           <div class="stat-number">${career.employability}</div>
-                           <div class="stat-label">Empleabilidad</div>
-                       </div>
-                       <div class="stat-item">
-                           <div class="stat-number">${career.duration}</div>
-                           <div class="stat-label">Duración</div>
-                       </div>
-                       <div class="stat-item">
-                           <div class="stat-number">28</div>
-                           <div class="stat-label">Certificados</div>
-                       </div>
-                       <div class="stat-item">
-                           <div class="stat-number">4,000+</div>
-                           <div class="stat-label">Alianzas empresariales</div>
-                       </div>
-                   </div>
-                   
-                   <div style="background: white; padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px solid #a8d46f;">
-                       <h4 style="color: #2E7D7B; margin-bottom: 15px; font-size: 1.2rem;">🎓 Beneficios del Modelo MAPS</h4>
-                       
-                       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin: 20px 0;">
-                           <div style="background: #f0f7f0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #7CB342;">
-                               <div style="font-size: 1.3rem; font-weight: 700; color: #2E7D7B;">28</div>
-                               <div style="font-size: 0.9rem; color: #555;">Certificados incluidos</div>
-                           </div>
-                           <div style="background: #f0f7f0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #7CB342;">
-                               <div style="font-size: 1.3rem; font-weight: 700; color: #2E7D7B;">1</div>
-                               <div style="font-size: 0.9rem; color: #555;">Estancia empresarial</div>
-                           </div>
-                           <div style="background: #f0f7f0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #7CB342;">
-                               <div style="font-size: 1.3rem; font-weight: 700; color: #2E7D7B;">7</div>
-                               <div style="font-size: 0.9rem; color: #555;">Lengua extranjera</div>
-                           </div>
-                           <div style="background: #f0f7f0; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #7CB342;">
-                               <div style="font-size: 1.3rem; font-weight: 700; color: #2E7D7B;">✓</div>
-                               <div style="font-size: 0.9rem; color: #555;">Insignias digitales</div>
-                           </div>
-                       </div>
-                       
-                       <h4 style="color: #2E7D7B; margin: 20px 0 10px 0; font-size: 1.1rem;">Rutas de enfoque disponibles:</h4>
-                       <div style="background: #e8f5e8; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                           <ul style="color: #555; line-height: 1.6; margin-left: 20px; margin-bottom: 0;">
-                               ${career.routes ? career.routes.map(route => `<li><strong>${route}</strong></li>`).join('') : '<li>Información no disponible</li>'}
-                           </ul>
-                       </div>
-                       
-                       <h4 style="color: #2E7D7B; margin: 20px 0 10px 0; font-size: 1.1rem;">Principales áreas de trabajo:</h4>
-                       <p style="color: #555; line-height: 1.6; margin-bottom: 15px;">${career.areas}</p>
-                       
-                       <h4 style="color: #2E7D7B; margin: 15px 0 10px 0; font-size: 1.1rem;">Oportunidades laborales:</h4>
-                       <ul style="color: #555; line-height: 1.6; margin-left: 20px;">
-                           ${career.jobs ? career.jobs.map(job => `<li>${job}</li>`).join('') : '<li>Información no disponible</li>'}
-                       </ul>
-                       
-                       <div style="background: linear-gradient(135deg, #e8f5e8 0%, #f0f7f0 100%); padding: 18px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #7CB342;">
-                           <strong style="color: #2E7D7B;">✨ Modelo MAPS:</strong> 
-                           <span style="color: #555;">Certificados bimestrales que se alinean con las demandas reales del mercado laboral + 4,000 alianzas empresariales</span>
-                       </div>
-                   </div>
-               </div>
-           `;
-           
-           document.getElementById('career-result').innerHTML = resultHTML;
-           
-           // Configurar enlace de WhatsApp con mensaje personalizado
-           const promotorInfo = promotoras[promotora];
-           let mensaje = `¡Hola ${promotorInfo.nombre}! Soy *${userData.nombre}*. Completé el test de Tecmilenio y mi resultado fue: *${career.name}*`;
-           
-           if (showSecondCareer) {
-               mensaje += `, pero también me interesa *${secondCareerInfo.name}*`;
-               console.log('📱 WhatsApp con dos carreras:', mensaje);
-           } else {
-               console.log('📱 WhatsApp con una carrera:', mensaje);
-           }
-           
-           mensaje += `. ¿Podrías darme información sobre el descuento y el proceso de admisión?`;
-           
-           const whatsappUrl = `https://wa.me/${promotorInfo.telefono}?text=${encodeURIComponent(mensaje)}`;
-           document.getElementById('whatsapp-link').href = whatsappUrl;
-           
-           // Ocultar quiz y mostrar resultados
-           document.getElementById('quiz-section').classList.add('hidden');
-           document.getElementById('results-section').classList.remove('hidden');
-           document.getElementById('results-section').classList.add('fade-in');
-       }
+        .form-group {
+            margin-bottom: 25px;
+        }
 
-       // Permitir solo números en el campo teléfono
-       document.getElementById('telefono').addEventListener('input', function(e) {
-           e.target.value = e.target.value.replace(/[^0-9]/g, '');
-       });
-   </script>
-</body>
-</html> 
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2E7D7B;
+            font-size: 0.95rem;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e8f0e8;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.3s ease;
+            background: #fafcfa;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #7CB342;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 179, 66, 0.2);
+        }
+
+        .privacy-notice {
+            background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+            border: 2px solid #a8d46f;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0;
+            font-size: 0.85rem;
+            color: #2E7D7B;
+            text-align: center;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2E7D7B;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .question-number {
+            background: #7CB342;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 15px;
+            font-size: 1.1rem;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 20px 22px;
+            border: 2px solid #e8f0e8;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafcfa;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(124, 179, 66, 0.12) 0%, rgba(168, 212, 111, 0.08) 100%);
+            transition: left 0.3s ease;
+        }
+
+        .option:hover::before {
+            left: 0;
+        }
+
+        .option:hover {
+            border-color: #7CB342;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(124, 179, 66, 0.2);
+        }
+
+        .option.selected {
+            border-color: #7CB342;
+            background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 179, 66, 0.25);
+        }
+
+        .btn {
+            background: #2E7D7B;
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 30px;
+            font-family: 'Montserrat', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            transition: left 0.3s ease;
+        }
+
+        .btn:hover::before {
+            left: 0;
+        }
+
+        .btn:hover {
+            background: #236a68;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(46, 125, 123, 0.3);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7CB342 0%, #a8d46f 50%, #7CB342 100%);
+            width: 0%;
+            transition: width 0.6s ease;
+            border-radius: 10px;
+        }
+
+        .results-container {
+            text-align: center;
+        }
+
+        .career-result {
+            background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+            border: 3px solid #a8d46f;
+            border-radius: 20px;
+            padding: 35px;
+            margin: 25px 0;
+        }
+
+        .career-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2E7D7B;
+            margin-bottom: 15px;
+        }
+
+        .career-description {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .career-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2E7D7B;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .special-offer {
+            background: #2E7D7B;
+            color: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .offer-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .offer-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .offer-highlight {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+            padding: 18px 30px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin: 20px 10px;
+            transition: all 0.3s ease;
+        }
+
+        .whatsapp-btn:hover {
+            background: #1ea952;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(37, 211, 102, 0.3);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .success-message {
+            color: #27ae60;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: none;
+            color: #7CB342;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .quiz-card {
+                padding: 25px;
+            }
+            
+            .university-name {
+                font-size: 1.8rem;
+            }
+            
+            .question-title {
+                font-size: 1.1rem;
+            }
+            
+            .career-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-card">
+            <!-- Formulario inicial -->
+            <div id="form-section" class="fade-in">
+                <div class="header">
+                    <h1 class="university-name">UNIVERSIDAD TECMILENIO</h1>
+                    <p class="subtitle">Descubre tu carrera ideal con nuestro test vocacional</p>
+                </div>
+
+                <form id="user-form">
+                    <div class="form-group">
+                        <label for="nombre">Nombre completo <span class="required">*</span></label>
+                        <input type="text" id="nombre" name="nombre" required>
+                        <div class="error-message" id="nombre-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefono">Teléfono (10 dígitos) <span class="required">*</span></label>
+                        <input type="tel" id="telefono" name="telefono" required maxlength="10" pattern="[0-9]{10}">
+                        <div class="error-message" id="telefono-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Correo electrónico <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required>
+                        <div class="error-message" id="email-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="promedio">Promedio académico <span class="required">*</span></label>
+                        <input type="text" id="promedio" name="promedio" required placeholder="Ej: 8.5 o 85">
+                        <div class="error-message" id="promedio-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="empresa">Empresa donde trabajas <span class="required">*</span></label>
+                        <input type="text" id="empresa" name="empresa" required placeholder="Nombre de la empresa o 'Estudiante' si no trabajas">
+                        <div class="error-message" id="empresa-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inversion">Inversión mensual disponible <span class="required">*</span></label>
+                        <select id="inversion" name="inversion" required>
+                            <option value="">Selecciona tu rango de inversión</option>
+                            <option value="$2,000 - $3,000">$2,000 - $3,000</option>
+                            <option value="$3,000 - $3,600">$3,000 - $3,600</option>
+                            <option value="$3,600 en adelante">$3,600 en adelante</option>
+                            <option value="No lo tengo definido">No lo tengo definido</option>
+                        </select>
+                        <div class="error-message" id="inversion-error"></div>
+                    </div>
+
+                    <div class="privacy-notice">
+                        🔒 Tus datos están protegidos por nuestro <strong>Aviso de Privacidad</strong>. 
+                        La información proporcionada será utilizada únicamente para fines educativos y de asesoría académica.
+                    </div>
+
+                    <div class="loading" id="loading-message">
+                        ⏳ Guardando información en Drive...
+                    </div>
+
+                    <button type="submit" class="btn" id="submit-btn">Iniciar Test Vocacional</button>
+                </form>
+            </div>
+
+            <!-- Sección de preguntas -->
+            <div id="quiz-section" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+
+                <div class="question-container">
+                    <h2 class="question-title">
+                        <span class="question-number" id="question-number">1</span>
+                        <span id="question-text"></span>
+                    </h2>
+                    <div class="options-grid" id="options-container"></div>
+                </div>
+
+                <button class="btn" id="next-btn" onclick="nextQuestion()" disabled>Siguiente</button>
+            </div>
+
+            <!-- Sección de resultados -->
+            <div id="results-section" class="hidden">
+                <div class="results-container">
+                    <h2 style="color: #2E7D7B; margin-bottom: 30px; font-size: 1.8rem;">¡Tu carrera ideal es!</h2>
+                    <div id="career-result"></div>
+                    
+                    <div class="special-offer">
+                        <h3 class="offer-title">¡Reclama tu Apoyo Especial!</h3>
+                        <div class="offer-description">
+                            Tienes acceso a beneficio especial en colegiatura, llamada personalizada con asesor académico e información exclusiva sobre becas.
+                        </div>
+                        <div class="offer-highlight">
+                            <strong>Tu información ya está guardada automáticamente en nuestro sistema.</strong>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <a href="#" id="whatsapp-link" class="whatsapp-btn">📱 Obtener información personalizada</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Google Sheets
+        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycby_dNsK1Uci6sPwgZHIsBuDrsMj_kgFHrNhmfchE-64-0vbfV1YxgG7cUl1KVtGDm5aEw/exec';
+
+        // Datos del usuario
+        let userData = {};
+        
+        // Obtener parámetro de promotora de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const promotora = urlParams.get('ref') || 'default';
+
+        // Base de datos de promotoras
+        const promotoras = {
+            'karla_vargas': { nombre: 'Karla Vargas', telefono: '+525615396047' },
+            'leticia_ramirez': { nombre: 'Leticia Ramírez', telefono: '+525581577465' },
+            'diana_dominguez': { nombre: 'Diana Domínguez', telefono: '+525644148415' },
+            'thania_carrasco': { nombre: 'Thania Carrasco', telefono: '+525643686430' },
+            'default': { nombre: 'nuestro equipo', telefono: '+525511958790' }
+        };
+
+        // Preguntas del quiz (balanceadas para todas las 9 carreras)
+        const questions = [
+            {
+                text: "¿Qué tipo de actividades profesionales te resultan más atractivas?",
+                options: [
+                    { text: "Liderar equipos y tomar decisiones estratégicas en empresas", scores: { administracion: 3, talento: 2, comercio: 1 } },
+                    { text: "Crear campañas de marketing y conectar con consumidores", scores: { mercadotecnia: 3, administracion: 1 } },
+                    { text: "Programar y desarrollar soluciones tecnológicas innovadoras", scores: { software: 3, tecnologia: 2 } },
+                    { text: "Asesorar legalmente y defender derechos en tribunales", scores: { derecho: 3 } },
+                    { text: "Enseñar, formar y guiar el aprendizaje de otros", scores: { educacion: 3, talento: 1 } },
+                    { text: "Optimizar procesos industriales y mejorar la eficiencia", scores: { industrial: 3, administracion: 1 } }
+                ]
+            },
+            {
+                text: "¿En qué ambiente de trabajo te desenvolverías mejor?",
+                options: [
+                    { text: "Oficinas corporativas dirigiendo proyectos empresariales", scores: { administracion: 3, comercio: 2, talento: 1 } },
+                    { text: "Agencias creativas desarrollando estrategias de marca", scores: { mercadotecnia: 3 } },
+                    { text: "Laboratorios tech programando y diseñando sistemas", scores: { software: 3, tecnologia: 2 } },
+                    { text: "Despachos jurídicos o tribunales manejando casos legales", scores: { derecho: 3 } },
+                    { text: "Instituciones educativas formando estudiantes", scores: { educacion: 3 } },
+                    { text: "Plantas industriales supervisando producción y calidad", scores: { industrial: 3 } }
+                ]
+            },
+            {
+                text: "¿Cuáles consideras que son tus principales fortalezas?",
+                options: [
+                    { text: "Liderazgo, organización y gestión de recursos", scores: { administracion: 3, talento: 2, industrial: 1 } },
+                    { text: "Creatividad, comunicación y persuasión", scores: { mercadotecnia: 3, educacion: 1 } },
+                    { text: "Lógica, análisis y resolución de problemas complejos", scores: { software: 3, tecnologia: 2, industrial: 1 } },
+                    { text: "Argumentación, investigación y pensamiento crítico", scores: { derecho: 3, educacion: 1 } },
+                    { text: "Paciencia, empatía y habilidades de enseñanza", scores: { educacion: 3, talento: 2 } },
+                    { text: "Negociación internacional y manejo de logística global", scores: { comercio: 3, administracion: 1 } }
+                ]
+            },
+            {
+                text: "¿Qué te motiva más en tu futuro profesional?",
+                options: [
+                    { text: "Dirigir empresas exitosas y alcanzar metas de negocio", scores: { administracion: 3, comercio: 1 } },
+                    { text: "Crear marcas reconocidas y campañas que impacten", scores: { mercadotecnia: 3 } },
+                    { text: "Desarrollar tecnología que transforme la sociedad", scores: { software: 3, tecnologia: 2 } },
+                    { text: "Defender la justicia y proteger los derechos humanos", scores: { derecho: 3 } },
+                    { text: "Formar a las nuevas generaciones y mejorar la educación", scores: { educacion: 3 } },
+                    { text: "Crear ambientes laborales positivos y desarrollar talento", scores: { talento: 3, administracion: 1 } }
+                ]
+            },
+            {
+                text: "¿Qué tipo de desafíos profesionales te emocionan más?",
+                options: [
+                    { text: "Planificar estrategias empresariales y liderar equipos", scores: { administracion: 3, talento: 1 } },
+                    { text: "Investigar mercados y crear campañas publicitarias exitosas", scores: { mercadotecnia: 3 } },
+                    { text: "Programar aplicaciones complejas y resolver bugs técnicos", scores: { software: 3, tecnologia: 1 } },
+                    { text: "Analizar casos legales complejos y ganar litigios", scores: { derecho: 3 } },
+                    { text: "Optimizar líneas de producción y reducir costos operativos", scores: { industrial: 3, administracion: 1 } },
+                    { text: "Manejar importaciones/exportaciones y logística internacional", scores: { comercio: 3 } }
+                ]
+            },
+            {
+                text: "¿En qué sector te gustaría desarrollar tu carrera?",
+                options: [
+                    { text: "Empresas multinacionales y sector corporativo", scores: { administracion: 3, comercio: 2, talento: 1 } },
+                    { text: "Agencias de publicidad, marketing digital y medios", scores: { mercadotecnia: 3 } },
+                    { text: "Empresas tecnológicas, startups y desarrollo de software", scores: { software: 3, tecnologia: 2 } },
+                    { text: "Sector público, despachos jurídicos y organismos de justicia", scores: { derecho: 3 } },
+                    { text: "Instituciones educativas públicas y privadas", scores: { educacion: 3 } },
+                    { text: "Industria manufacturera, automotriz y producción", scores: { industrial: 3 } }
+                ]
+            }
+        ];
+
+        // Información detallada de las carreras
+        const careers = {
+            administracion: {
+                name: "Licenciatura en Administración de Empresas",
+                description: "Lidera la transformación organizacional, implementando estrategias innovadoras que optimizan recursos y potencian el crecimiento sostenible.",
+                employability: "90%",
+                duration: "3 años",
+                companies: "5+ millones de empresas en México",
+                areas: "Finanzas, Marketing, Recursos Humanos, Operaciones",
+                jobs: ["Jefatura administrativa", "Coordinador de talento", "Consultor empresarial", "Analista financiero", "Gerente de ventas corporativas"],
+                routes: ["Turismo", "Liderazgo e innovación", "Gestión de ventas estratégicas", "Gestión de capital humano"]
+            },
+            mercadotecnia: {
+                name: "Licenciatura en Mercadotecnia",
+                description: "Conecta consumidores con productos o servicios, desarrollando estrategias creativas que impulsan el posicionamiento de marcas.",
+                employability: "88%",
+                duration: "3 años",
+                companies: "Empresas en constante necesidad de marketing digital",
+                areas: "Marketing Digital, Investigación de Mercado, Publicidad, Branding",
+                jobs: ["Coordinador de mercadotecnia", "Especialista en marketing digital", "Community manager", "Growth hacker", "Consultor de marketing digital"],
+                routes: ["Gestión de ventas estratégicas", "Inteligencia de mercados", "Estrategias de Mercadotecnia en Buscadores y Comercio Electrónico", "Estrategia Publicitaria"]
+            },
+            derecho: {
+                name: "Licenciatura en Derecho",
+                description: "Protege los derechos de las personas y organizaciones, utilizando estrategias legales innovadoras que garantizan justicia.",
+                employability: "95.4%",
+                duration: "3 años",
+                companies: "Ejercicio en áreas civil, penal y laboral",
+                areas: "Derecho Civil, Penal, Laboral, Corporativo",
+                jobs: ["Abogado litigante", "Fiscal", "Asesor jurídico", "Consultor en LegalTech", "Especialista en litigación oral"],
+                routes: ["Derechos Humanos", "Criminología", "Legal Tech", "Sistema Penal Acusatorio"]
+            },
+            educacion: {
+                name: "Licenciatura en Educación",
+                description: "Lidera iniciativas educativas y sociales, diseñando programas curriculares y realizando investigaciones para mejorar la calidad educativa.",
+                employability: "92%",
+                duration: "3 años",
+                companies: "Instituciones públicas, privadas y ONGs",
+                areas: "Docencia, Gestión Educativa, Investigación, Educación Especial",
+                jobs: ["Docente", "Coordinador académico", "Investigador educativo", "Especialista en educación digital", "Coach educativo"],
+                routes: ["Educación Formal", "Educación Especial", "Educación Digital", "Orientación vocacional y profesional"]
+            },
+            industrial: {
+                name: "Ingeniería Industrial",
+                description: "Transforma industrias mediante la optimización de procesos, utilizando herramientas innovadoras que incrementan la eficiencia.",
+                employability: "94%",
+                duration: "3 años",
+                companies: "Manufactura, logística y servicios",
+                areas: "Optimización de Procesos, Calidad, Gestión de Operaciones",
+                jobs: ["Ingeniero de procesos", "Ingeniero de calidad", "Supervisor de producción", "Consultor de gestión de operaciones"],
+                routes: ["Calidad Automotriz", "Gestión de Proyectos Green Belt", "Equipos de Alto Rendimiento", "Análisis de datos y digitalización"]
+            },
+            software: {
+                name: "Ingeniería en Desarrollo de Software",
+                description: "Impulsa el cambio tecnológico en las empresas, utilizando herramientas innovadoras que optimizan procesos y mejoran resultados.",
+                employability: "92%",
+                duration: "3 años",
+                companies: "Más de 150 millones de vacantes estimadas para 2025",
+                areas: "Desarrollo Web, Aplicaciones Móviles, Big Data, DevOps",
+                jobs: ["Desarrollador Frontend/Backend", "Ingeniero de datos", "Arquitecto de software", "Ingeniero DevOps", "Desarrollador de videojuegos"],
+                routes: ["Análisis de datos", "Diseño y programación de videojuegos", "Inteligencia artificial", "Metodología DevOps", "Ciberseguridad", "Procesamiento de datos a gran escala - Big Data"]
+            },
+            comercio: {
+                name: "Licenciatura en Comercio y Negocios Internacionales",
+                description: "Impulsa el crecimiento global de las empresas, desarrollando estrategias que optimizan operaciones y conectan mercados sin fronteras.",
+                employability: "94%",
+                duration: "3 años",
+                companies: "75% de empresas buscan profesionales en comercio internacional",
+                areas: "Importación/Exportación, Logística, Negocios Globales",
+                jobs: ["Ejecutivo de operaciones logísticas", "Clasificador arancelario", "Coordinador de logística", "Gerente de logística"],
+                routes: ["Negocios Internacionales", "Logística y Cadena de Suministro"]
+            },
+            talento: {
+                name: "Licenciatura en Administración y Desarrollo de Talento",
